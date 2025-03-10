@@ -1,44 +1,132 @@
-const canvas = document.getElementById('jogo2D')
-const ctx = canvas.getContext('2d')
-const gravidade = 1
-document.addEventListener('keypress', (e) => {
-    if(e.code == 'Space' && personagem.pulando==false){
-        personagem.velocidY =  15
-        console.log("PULOU")
-        personagem.pulando = true
-    
-    }})
+const canvas = document.getElementById('jogo2D');
+const ctx = canvas.getContext('2d');
+const gravidade = 0.5;
+let jogoAtivo = true;
 
-const personagem ={
+document.addEventListener('keypress', (e) => {
+    if (e.code == 'Space' && personagem.pulando == false && jogoAtivo) {
+        personagem.velocidadey = 15;
+        personagem.pulando = true;
+    } else if (e.code == 'Enter' && !jogoAtivo) {
+        reiniciarJogo();
+    }
+});
+
+const personagem = {
     x: 100,
     y: canvas.height - 50,
     altura: 50,
     largura: 50,
-    velocidY: 0,
+    velocidadey: 0,
     pulando: false
+};
+const imgPersonagem = new Image();
+imgPersonagem.src = 'monsterhigh-morcego.png'; // Substitua pelo caminho correto da imagem
+
+function desenharPersonagem() {
+    const proporcao = imgPersonagem.width / imgPersonagem.height;
+    const novaAltura = personagem.altura;
+    const novaLargura = novaAltura * proporcao; // Mantém a proporção original
+
+    ctx.drawImage(imgPersonagem, personagem.x, personagem.y, novaLargura, novaAltura);
 }
 
-function desenharPersonagem(){
-    ctx.fillRect(personagem.x, personagem.y, personagem.altura,personagem.largura)
-    ctx.fillStyle = 'black'
-}
-function atualizarPersonagem(){
-    if(personagem.pulando == true){
-        personagem.velocidY -= gravidade
-        personagem.y -= personagem.velocidY
-        if(personagem.y >= canvas.height-50){
-            personagem.velocidY = 0
-            personagem.pulando = false
+function atualizarPersonagem() {
+    if (personagem.pulando) {
+        personagem.velocidadey -= gravidade;
+        personagem.y -= personagem.velocidadey;
+        if (personagem.y >= canvas.height - 50) {
+            personagem.velocidadey = 0;
+            personagem.pulando = false;
+            personagem.y = canvas.height - 50;
         }
     }
 }
 
-function loop(){
-    ctx.clearRect(0,0,canvas.width,canvas.height)
-    desenharPersonagem()
-    atualizarPersonagem()
-    
-    requestAnimationFrame(loop)
+const obstaculo = {
+    x: canvas.width - 50,
+    y: canvas.height - 100,
+    largura: 50,
+    altura: 100,
+    velocidadex: 7
+};
+
+function desenharObstaculo() {
+    ctx.fillStyle = 'rgb(52,42,133)';
+    ctx.fillRect(obstaculo.x, obstaculo.y, obstaculo.largura, obstaculo.altura);
 }
 
-loop()
+function atualizarObstaculo() {
+    obstaculo.x -= obstaculo.velocidadex;
+    if (obstaculo.x <= 0 - obstaculo.largura) {
+        obstaculo.x = canvas.width;
+        obstaculo.velocidadex += 0.2;
+        let nova_altura = (Math.random() * 50) + 100;
+        obstaculo.altura = nova_altura;
+        obstaculo.y = canvas.height - nova_altura;
+    }
+}
+
+function verificarColisao() {
+    if (
+        personagem.x < obstaculo.x + obstaculo.largura &&
+        personagem.x + personagem.largura > obstaculo.x &&
+        personagem.y < obstaculo.y + obstaculo.altura &&
+        personagem.y + personagem.altura > obstaculo.y
+    ) {
+        jogoAtivo = false;
+    }
+}
+
+function exibirGameOver() {
+    // Fundo semitransparente para destacar a mensagem
+    ctx.fillStyle = 'hsla(342, 96.90%, 62.50%, 0.70)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Texto "GAME OVER" com contorno e sombra
+    ctx.fillStyle = 'BEIGE';
+    ctx.font = 'bold 50px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'PLUM';
+    ctx.shadowBlur = 10;
+    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
+
+    // Texto "Pressione ENTER para reiniciar" piscando
+    ctx.font = '20px Arial';
+    ctx.fillStyle = 'white';
+    ctx.shadowBlur = 0;
+    if (Math.floor(Date.now() / 500) % 2 === 0) { // Faz o texto piscar a cada 500ms
+        ctx.fillText('Pressione ENTER para reiniciar', canvas.width / 2, canvas.height / 2 + 40);
+    }
+
+    // Manter a tela de Game Over sendo renderizada para o piscar funcionar
+    requestAnimationFrame(exibirGameOver);
+}
+
+
+function reiniciarJogo() {
+    jogoAtivo = true;
+    personagem.y = canvas.height - 50;
+    personagem.velocidadey = 0;
+    personagem.pulando = false;
+    obstaculo.x = canvas.width - 50;
+    obstaculo.velocidadex = 7;
+    loop();
+}
+
+function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    if (jogoAtivo) {
+        desenharPersonagem();
+        desenharObstaculo();
+        atualizarPersonagem();
+        atualizarObstaculo();
+        verificarColisao();
+        requestAnimationFrame(loop);
+    } else {
+        exibirGameOver();
+    }
+}
+
+loop();
