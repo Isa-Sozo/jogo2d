@@ -21,12 +21,12 @@ const personagem = {
     pulando: false
 };
 const imgPersonagem = new Image();
-imgPersonagem.src = 'monsterhigh-morcego.png'; // Substitua pelo caminho correto da imagem
+imgPersonagem.src = 'monsterhigh-morcego.png'; 
 
 function desenharPersonagem() {
     const proporcao = imgPersonagem.width / imgPersonagem.height;
     const novaAltura = personagem.altura;
-    const novaLargura = novaAltura * proporcao; // Mantém a proporção original
+    const novaLargura = novaAltura * proporcao; 
 
     ctx.drawImage(imgPersonagem, personagem.x, personagem.y, novaLargura, novaAltura);
 }
@@ -79,11 +79,9 @@ function verificarColisao() {
 }
 
 function exibirGameOver() {
-    // Fundo semitransparente para destacar a mensagem
     ctx.fillStyle = 'hsla(342, 96.90%, 62.50%, 0.70)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Texto "GAME OVER" com contorno e sombra
     ctx.fillStyle = 'BEIGE';
     ctx.font = 'bold 50px Arial';
     ctx.textAlign = 'center';
@@ -91,15 +89,13 @@ function exibirGameOver() {
     ctx.shadowBlur = 10;
     ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
 
-    // Texto "Pressione ENTER para reiniciar" piscando
     ctx.font = '20px Arial';
     ctx.fillStyle = 'white';
     ctx.shadowBlur = 0;
-    if (Math.floor(Date.now() / 500) % 2 === 0) { // Faz o texto piscar a cada 500ms
+    if (Math.floor(Date.now() / 500) % 2 === 0) { 
         ctx.fillText('Pressione ENTER para reiniciar', canvas.width / 2, canvas.height / 2 + 40);
     }
 
-    // Manter a tela de Game Over sendo renderizada para o piscar funcionar
     requestAnimationFrame(exibirGameOver);
 }
 
