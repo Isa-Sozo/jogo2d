@@ -1,44 +1,76 @@
 const canvas = document.getElementById('jogo2D');
 const ctx = canvas.getContext('2d');
 let jogoAtivo = true;
+
 document.addEventListener('keypress', (e) => {
-    if (e.code == 'Space' && personagem.pulando == false && jogoAtivo) {
-        personagem.velocidadey = 15;
-        personagem.pulando = true;
+    if (e.code == 'Space' && !personagem.pulando && jogoAtivo) {
+        personagem.saltar();
     } else if (e.code == 'Enter' && !jogoAtivo) {
         reiniciarJogo();
     }
 });
 
 class Entidade {
-    #gravidade
-    constructor (x, y, largura, altura){
+    #gravidade;
+    constructor(x, y, largura, altura) {
         this.x = x;
         this.y = y;
         this.largura = largura;
         this.altura = altura;
-        this.#gravidade = 0.5
+        this.#gravidade = 0.5;
     }
-    get gravidade(){
-        return this.#gravidade
+    get gravidade() {
+        return this.#gravidade;
     }
-    desenhar = function ( cor){
-        ctx.fillStyle = cor
-        ctx.fillRect(this.x, this.y, this.largura, this.altura)
-    }
-}
-class Personagem extends Entidade{
-    constructor(x, y, largura, altura){
-        super(x,y, largura, altura)
-       
+    desenhar(cor) {
+        ctx.fillStyle = cor;
+        ctx.fillRect(this.x, this.y, this.largura, this.altura);
     }
 }
-class obstaculo extends Entidade{
-    constructor (x, y, largura, altura){
-        super(x,y, largura, altura)
+
+class Personagem extends Entidade {
+    #pulando;
+    #velocidadey;
+    constructor(x, y, largura, altura) {
+        super(x, y, largura, altura);
+        this.#pulando = false;
+        this.#velocidadey = 0;
+    }
+
+    saltar() {
+        if (!this.#pulando) {
+            this.#velocidadey = 15;
+            this.#pulando = true;
+            console.log('saltou');
+        }
+    }
+
+    get pulando() {
+        return this.#pulando;
+    }
+
+    atualizarPersonagem() {
+        if (this.#pulando) {
+            this.#velocidadey -= this.gravidade;
+            this.y -= this.#velocidadey;
+
+            if (this.y >= canvas.height - 50) {
+                this.#velocidadey = 0;
+                this.#pulando = false;
+                this.y = canvas.height - 50;
+            }
+        }
     }
 }
-const personagem = new Personagem(100, canvas.height - 50, 50, 50)
+
+class Obstaculo extends Entidade {
+    constructor(x, y, largura, altura) {
+        super(x, y, largura, altura);
+    }
+}
+const obstaculo = new Obstaculo (100, canvas.height - 100, 100, 50)
+
+const personagem = new Personagem(100, canvas.height - 50, 50, 50);
 
 function exibirGameOver() {
     ctx.fillStyle = 'hsla(342, 96.90%, 62.50%, 0.70)';
@@ -63,13 +95,10 @@ function exibirGameOver() {
 
 function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+
     if (jogoAtivo) {
-        personagem.desenhar("black")
-        //desenharObstaculo();
-        //atualizarPersonagem();
-        //atualizarObstaculo();
-        //verificarColisao();
+        personagem.desenhar("black");
+        personagem.atualizarPersonagem();
         requestAnimationFrame(loop);
     } else {
         exibirGameOver();
