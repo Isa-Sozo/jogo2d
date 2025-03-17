@@ -1,6 +1,8 @@
 const canvas = document.getElementById('jogo2D');
 const ctx = canvas.getContext('2d');
 let jogoAtivo = true;
+let pontuacao = 0;
+const gravidade = 0.5;
 
 document.addEventListener('keypress', (e) => {
     if (e.code === 'Space' && !personagem.pulando && jogoAtivo) {
@@ -35,8 +37,8 @@ class Personagem extends Entidade {
         super(x, y, largura, altura);
         this.#pulando = false;
         this.#velocidadey = 0;
-        this.img = new Image();
-        this.img.src = 'monsterhigh-morcego.png';
+        this.imagem = new Image();
+        this.imagem.src = 'monsterhigh-morcego.png'; // Imagem do personagem
     }
 
     saltar() {
@@ -50,10 +52,11 @@ class Personagem extends Entidade {
         return this.#pulando;
     }
 
-    atualizarPersonagem() {
+    atualizar() {
         if (this.#pulando) {
-            this.#velocidadey -= this.gravidade;
+            this.#velocidadey -= gravidade;
             this.y -= this.#velocidadey;
+
             if (this.y >= canvas.height - this.altura) {
                 this.#velocidadey = 0;
                 this.#pulando = false;
@@ -62,84 +65,122 @@ class Personagem extends Entidade {
         }
     }
 
+    verificarColisao(obstaculos) {
+        for (let obstaculo of obstaculos) {
+            if (
+                this.x < obstaculo.x + obstaculo.largura &&
+                this.x + this.largura > obstaculo.x &&
+                this.y < obstaculo.y + obstaculo.altura &&
+                this.y + this.altura > obstaculo.y
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     desenhar() {
-        ctx.drawImage(this.img, this.x, this.y, this.largura, this.altura);
+        ctx.drawImage(this.imagem, this.x, this.y, this.largura, this.altura);
     }
 }
 
 class Obstaculo extends Entidade {
-    constructor(x, y, largura, altura, velocidade) {
+    constructor(x, y, largura, altura, velocidadex) {
         super(x, y, largura, altura);
-        this.velocidade = velocidade;
+        this.velocidadex = velocidadex || 4;
+        this.passou = false;
     }
 
     mover() {
-        this.x -= this.velocidade;
+        this.x -= this.velocidadex;
+
         if (this.x + this.largura < 0) {
             this.x = canvas.width;
-            this.velocidade += 0.2;
-            let nova_altura = (Math.random() * 50) + 100;
-            this.altura = nova_altura;
-            this.y = canvas.height - nova_altura;
+            this.velocidadex += 0.2;
+            let novaAltura = (Math.random() * 50) + 100;
+            this.altura = novaAltura;
+            this.y = canvas.height - novaAltura;
+            this.passou = false;
         }
+
+        // Se o personagem passar completamente pelo obstáculo, adiciona ponto
+        if (!this.passou && this.x + this.largura < personagem.x) {
+            pontuacao += 1;
+            this.passou = true;
+        }
+    }
+
+    desenhar(ctx) {
+        ctx.fillStyle = "rgb(52,42,133)"; // Garantindo que o obstáculo tenha a cor desejada
+        ctx.fillRect(this.x, this.y, this.largura, this.altura);
     }
 }
 
 const personagem = new Personagem(100, canvas.height - 50, 50, 50);
-const obstaculo = new Obstaculo(canvas.width, canvas.height - 100, 50, 100, 7);
-
-function verificarColisao() {
-    if (
-        personagem.x < obstaculo.x + obstaculo.largura &&
-        personagem.x + personagem.largura > obstaculo.x &&
-        personagem.y < obstaculo.y + obstaculo.altura &&
-        personagem.y + personagem.altura > obstaculo.y
-    ) {
-        jogoAtivo = false;
-    }
-}
+const obstaculos = [
+    new Obstaculo(500, canvas.height - 50, 50, 50),
+    new Obstaculo(800, canvas.height - 100, 50, 100)
+];
 
 function exibirGameOver() {
     ctx.fillStyle = 'hsla(342, 96.90%, 62.50%, 0.70)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     ctx.fillStyle = 'BEIGE';
     ctx.font = 'bold 50px Arial';
     ctx.textAlign = 'center';
-    ctx.shadowColor = 'PLUM';
+    // Sombra para o Game Over
+    ctx.shadowColor = 'white';
     ctx.shadowBlur = 10;
     ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
 
     ctx.font = '20px Arial';
     ctx.fillStyle = 'white';
-    ctx.shadowBlur = 0;
-    if (Math.floor(Date.now() / 500) % 2 === 0) {
-        ctx.fillText('Pressione ENTER para reiniciar', canvas.width / 2, canvas.height / 2 + 40);
-    }
-    
-    requestAnimationFrame(exibirGameOver);
+    // Removido a sombra
+    ctx.shadowColor = 'transparent'; // Sombra desativada aqui
+    ctx.fillText('Pressione ENTER para reiniciar', canvas.width / 2, canvas.height / 2 + 40);
 }
+
 
 function reiniciarJogo() {
     jogoAtivo = true;
+    pontuacao = 0;
     personagem.y = canvas.height - 50;
     personagem.velocidadey = 0;
     personagem.pulando = false;
-    obstaculo.x = canvas.width;
-    obstaculo.velocidade = 7;
+    obstaculos[0].x = canvas.width;
+    obstaculos[1].x = canvas.width + 300;
     loop();
+}
+
+function exibirPontuacao() {
+    ctx.fillStyle = 'white'; // Cor da pontuação
+    ctx.font = 'bold 30px Arial'; // Usando o mesmo estilo de fonte do "Game Over"
+    ctx.textAlign = 'center'; // Alinha o texto no centro
+    ctx.shadowColor = 'white';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'transparent'; // Sombra desativada aqui
+    ctx.fillText(`Pontuação: ${pontuacao}`, canvas.width / 2, 30); // Exibe no centro superior da tela
 }
 
 function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     if (jogoAtivo) {
+        personagem.atualizar();
         personagem.desenhar();
-        personagem.atualizarPersonagem();
-        
-        obstaculo.desenhar("rgb(52,42,133)");
-        obstaculo.mover();
-        
-        verificarColisao();
+
+        obstaculos.forEach((obstaculo) => {
+            obstaculo.mover();
+            obstaculo.desenhar(ctx, "rgb(52,42,133)");
+        });
+
+        exibirPontuacao(); // Mostra a pontuação na tela
+
+        if (personagem.verificarColisao(obstaculos)) {
+            jogoAtivo = false;
+        }
+
         requestAnimationFrame(loop);
     } else {
         exibirGameOver();
