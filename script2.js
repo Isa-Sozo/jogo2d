@@ -89,6 +89,8 @@ class Obstaculo extends Entidade {
         super(x, y, largura, altura);
         this.velocidadex = velocidadex || 4;
         this.passou = false;
+        this.imagem = new Image();
+        this.imagem.src = 'caixão.png';  // Imagem do obstáculo
     }
 
     mover() {
@@ -111,8 +113,8 @@ class Obstaculo extends Entidade {
     }
 
     desenhar(ctx) {
-        ctx.fillStyle = "rgb(52,42,133)"; // Garantindo que o obstáculo tenha a cor desejada
-        ctx.fillRect(this.x, this.y, this.largura, this.altura);
+        // Desenha a imagem do obstáculo
+        ctx.drawImage(this.imagem, this.x, this.y, this.largura, this.altura);
     }
 }
 
